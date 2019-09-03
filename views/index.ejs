@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Foodspinner</title>
+    <style>
+        .container>div {
+            display: flex;
+        }
+
+        .container>div>div,
+        .container>div>input {
+            margin: 5px;
+            padding: 2px;
+            height: 30px;
+        }
+
+        .container>div>div {
+            text-align: right;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            width: 300px;
+        }
+
+        .container>div>input {
+            border: 2px solid grey;
+            padding-left: 5px;
+            width: 80px;
+        }
+
+        button {
+            width: 200px;
+            height: 50px;
+            padding: 10px;
+            margin: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <form class="container">
+        <% for(var i=0; i < list.length; i++) { %>
+        <div>
+            <div><%= list[i].name %></div>
+            <input onkeyup=" onInputChange(this)" type="number" step="0.01" name="<%= list[i].id %>" />
+        </div>
+        <% } %>
+        <button type="submit">Submit</button>
+    </form>
+    <button id="clearSubmits">Clear submits</button>
+    <button id="clearInputs">Clear inputs</button>
+    <button id="pickButton">Pick</button>
+    <script>
+        const LOCALSTORAGE_KEY = "foodspinner"
+
+        onInputChange = (e) => {
+            save()
+        }
+
+        getInputs = () => {
+            const loadObj = {}
+            for (const input of document.querySelectorAll("input")) {
+                loadObj[input.name] = input.value
+            }
+            return loadObj;
+        }
+
+        save = () => {
+            localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(getInputs()))
+        }
+
+        load = () => {
+            const savedObj = JSON.parse(localStorage.getItem(LOCALSTORAGE_KEY) || "{}")
+            for (let [key, value] of Object.entries(savedObj)) {
+                const input = document.querySelector(`input[name="${ key }"]`)
+                if (input !== null) {
+                    input.value = value;
+                }
+            }
+        }
+
+        load()
+
+        document.querySelector("form").onsubmit = (e) => {
+            e.preventDefault();
+            fetch('/submit', {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(getInputs())
+            })
+                .then((res) => {
+                    if (res.status === 200) {
+                        res.text().then(
+                            t => { alert(t) }
+                        )
+                    } else {
+                        alert("error")
+                        console.error(res)
+                    }
+                })
+                .catch(error => {
+                    alert("Submit error")
+                    console.error(error)
+                });
+        };
+
+        document.querySelector("#clearSubmits").onclick = () => {
+            fetch('/clear', {
+                method: "POST",
+            })
+                .then((res) => {
+                    if (res.status === 200) {
+                        res.text().then(
+                            t => { alert(t) }
+                        )
+                    } else {
+                        alert("error")
+                        console.error(res)
+                    }
+                })
+                .catch(error => {
+                    alert("error")
+                    console.error(error)
+                });
+        };
+
+        document.querySelector("#clearInputs").onclick = () => {
+            for (const input of document.querySelectorAll("input")) {
+                input.value = ""
+            }
+            localStorage.removeItem(LOCALSTORAGE_KEY)
+        };
+
+        document.querySelector("#pickButton").onclick = () => {
+            fetch('/pick', {
+                method: "POST",
+            })
+                .then((res) => {
+                    if (res.status === 200) {
+                        res.text().then(
+                            t => { alert(t) }
+                        )
+                    } else {
+                        alert("error")
+                        console.error(res)
+                    }
+                })
+                .catch(error => {
+                    alert("error")
+                    console.error(error)
+                });
+        };
+
+    </script>
+</body>
+
+
+</html>
